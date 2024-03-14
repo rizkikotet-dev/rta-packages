@@ -68,20 +68,23 @@ jobs:
           name: OpenWrt RTA Packages
           path: ${{ env.FIRMWARE }}/base/*.ipk
 
-      - name: Upload Release
+      - name: Create Release
         if: ${{ github.event.inputs.upload-artifacts }} == 'false'
-        uses: actions/upload-release@v1
+        run: |
+          tag=$(git describe --tags)
+          body="Build date: ${{ env.DATETIME }}"
+          echo "::set-output name=tag::$tag"
+          echo "::set-output name=body::$body"
+        id: create_release
+
+      - name: Upload Release Asset
+        if: ${{ github.event.inputs.upload-artifacts }} == 'false'
+        uses: actions/upload-release-asset@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          file_glob: true
-          file: ${{ env.FIRMWARE }}/base/*.ipk
-          asset_name: ${{ github.event.repository.name }}-${{ github.sha }}
-          tag: latest
-          release_name: OpenWrt RTA Packages
-          overwrite: true
-          prerelease: ${{ inputs.upload-prerelease }}
-          body: |
-            Build date: ${{ env.DATETIME }}
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.FIRMWARE }}/base/*.ipk
+          asset_name: ${{ github.event.repository.name }}-${{ github.sha }}.zip
+          asset_content_type: application/zip
 
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2.0.3
