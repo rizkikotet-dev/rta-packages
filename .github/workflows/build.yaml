@@ -76,6 +76,14 @@ jobs:
           done
           make defconfig
 
+      - name: Configure RTA (main)
+        run: |
+          cd sdk
+          for package in "${packages[@]}"; do
+          ./scripts/feeds install "$package"
+          done
+          make defconfig
+
       - name: Compile RTA
         run: |
           cd sdk
