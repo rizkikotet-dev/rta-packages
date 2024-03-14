@@ -39,53 +39,57 @@ jobs:
           echo "src-git-full routing https://git.openwrt.org/feed/routing.git;openwrt-21.02"  >> feeds.conf
           git clone https://github.com/${{ github.repository }}.git package/downloads
           ./scripts/feeds update -a
-          ./scripts/feeds install -d n luci-app-base64 luci-app-libernet luci-app-libernet-bin luci-app-libernet-plus luci-app-mikhmon luci-app-mikhmon4 luci-app-netmonitor luci-app-wegare luci-app-xderm luci-app-xderm-bin luci-app-xderm-limit
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
+          for package in "${packages[@]}"; do
+            ./scripts/feeds install -d n "$package"
+          done
           make defconfig
 
       - name: Compile RTA
         run: |
           cd sdk
-          make package/luci-app-base64/compile
-          make package/luci-app-libernet/compile
-          make package/luci-app-libernet-bin/compile
-          make package/luci-app-libernet-plus/compile
-          make package/luci-app-mikhmon/compile
-          make package/luci-app-mikhmon4/compile
-          make package/luci-app-netmonitor/compile
-          make package/luci-app-wegare/compile
-          make package/luci-app-xderm/compile
-          make package/luci-app-xderm-bin/compile
-          make package/luci-app-xderm-limit/compile
+          for package in "${packages[@]}"; do
+            make "package/$package/compile"
+          done
           mv bin/packages/x86_64/base/ ../
           echo "status=success" >> $GITHUB_OUTPUT
           echo "FIRMWARE=$PWD" >> $GITHUB_ENV
           echo "DATETIME=$(date +'%Y.%m.%d-%H:%M:%S')" >> $GITHUB_ENV
 
-      - name: Upload Firmware
-        if: ${{ github.event.inputs.upload-artifacts }} == 'true'
-        uses: actions/upload-artifact@v2
+      - name: Upload All Firmware to Artifacts
+        if: github.event.inputs.upload-artifacts == 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: OpenWrt RTA Packages
           path: ${{ env.FIRMWARE }}/base/*.ipk
-
-      - name: Create Release
-        if: ${{ github.event.inputs.upload-artifacts }} == 'false'
-        run: |
-          tag=$(git describe --tags)
-          body="Build date: ${{ env.DATETIME }}"
-          echo "::set-output name=tag::$tag"
-          echo "::set-output name=body::$body"
-        id: create_release
-
-      - name: Upload Release Asset
-        if: ${{ github.event.inputs.upload-artifacts }} == 'false'
-        uses: actions/upload-release-asset@v1
+  
+      - name: Upload Firmware to Release
+        uses: svenstaro/upload-release-action@v2
+        if: github.event.inputs.upload-artifacts == 'false'
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.FIRMWARE }}/base/*.ipk
-          asset_name: ${{ github.event.repository.name }}-${{ github.sha }}.zip
-          asset_content_type: application/zip
-
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file_glob: true
+          file: ${{ env.FIRMWARE }}/base/*.ipk
+          asset_name: ${{ github.event.repository.name }}-${{ github.sha }}
+          tag: latest
+          release_name: OpenWrt RTA Packages
+          overwrite: true
+          prerelease: ${{ inputs.upload-prerelease }}
+          body: |
+            Build date: ${{ env.DATETIME }}
+      
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2.0.3
         with:
