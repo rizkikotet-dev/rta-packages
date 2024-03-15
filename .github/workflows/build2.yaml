@@ -1,4 +1,4 @@
-name: AutoCompiler OpenWrt Packages
+name: Auto compile with openwrt sdk v2
 
 on:
   workflow_dispatch:

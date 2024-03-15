@@ -1,0 +1,175 @@
+name: "Auto compile with openwrt sdk v3"
+on:
+  repository_dispatch:
+  workflow_dispatch:
+    inputs:
+      ssh:
+        description: 'SSH connection to Actions'
+        required: false
+        default: 'false'
+env:
+  TZ: Asia/Jakarta
+  rtapackage: ${{ github.repository }}
+
+jobs:
+  job_check:
+    name: Check Version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+          ref: 'main'
+
+      - name: Prepare release
+        run: |
+          echo "## :mega:Update content" >> release.txt
+          echo "![](https://img.shields.io/github/downloads/${{ env.rtapackage }}/prerelease/total?style=flat-square)" >> release.txt
+          touch release.txt
+
+      - name: Generate new tag & release
+        uses: softprops/action-gh-release@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          prerelease: true
+          tag_name: prerelease
+          body_path: release.txt
+
+
+  job_build_rtapackage:
+    name: Build rtapackage [Luci ${{ matrix.luci_ver }}]
+    needs: job_check
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sdk_ver: 21.02
+            luci_ver: 19.07
+            sdk_url: https://downloads.openwrt.org/releases/21.02.5/targets/x86/64/openwrt-sdk-21.02.5-x86-64_gcc-8.4.0_musl.Linux-x86_64.tar.xz
+
+          - sdk_ver: 23.05
+            luci_ver: 23.05
+            sdk_url: https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+
+    steps:
+      - name: Install packages
+        run: |
+          docker rmi `docker images -q`
+          sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
+          df -hT
+          echo "Install packages"
+          sudo -E apt-get -qq update
+          sudo -E apt-get -qq install build-essential clang flex bison g++ gawk gcc-multilib g++-multilib gettext git libncurses5-dev libssl-dev python3-distutils rsync unzip zlib1g-dev file wget
+          sudo -E apt-get -qq autoremove --purge
+          sudo -E apt-get -qq clean
+
+      - name: Cache openwrt SDK
+        id: cache-sdk
+        uses: actions/cache@v4
+        with:
+          path: sdk
+          key: openwrt-sdk-23.05-rc3-x86_64
+
+      - name: Initialization environment
+        if: steps.cache-sdk.outputs.cache-hit != 'true'
+        env:
+          url_sdk: https://downloads.openwrt.org/releases/23.05.0/targets/x86/64/openwrt-sdk-23.05.0-x86-64_gcc-12.3.0_musl.Linux-x86_64.tar.xz
+        run: |
+          wget ${{ env.url_sdk }}
+          file_name=$(echo ${{env.url_sdk}} | awk -F/ '{print $NF}')
+          mkdir sdk && tar -xJf $file_name -C ./sdk --strip-components=1
+          cd sdk
+          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-${{ matrix.sdk_ver }}" > feeds.conf
+          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-${{ matrix.sdk_ver }}" >> feeds.conf
+          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-${{ matrix.luci_ver }}" >> feeds.conf
+          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-${{ matrix.sdk_ver }}"  >> feeds.conf
+          echo "src-git rtapackage https://github.com/${{ env.rtapackage }}.git;main" >> feeds.conf
+          ./scripts/feeds update -a
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
+          for package in "${packages[@]}"; do
+            echo "CONFIG_PACKAGE_$package=m" > .config
+            ./scripts/feeds install -d n "$package"
+          done
+          make download -j8
+
+      - name: Configure rtapackage
+        run: |
+          cd sdk
+          ./scripts/feeds update rtapackage
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
+          for package in "${packages[@]}"; do
+            ./scripts/feeds install "$package"
+            echo "CONFIG_ALL_NONSHARED=n" > .config
+            echo "CONFIG_ALL_KMODS=n" >> .config
+            echo "CONFIG_ALL=n" >> .config
+            echo "CONFIG_AUTOREMOVE=n" >> .config
+            echo "CONFIG_LUCI_LANG_zh_Hans=n" >> .config
+            echo "CONFIG_PACKAGE_$package=m" >> .config
+          done
+          make defconfig
+
+      - name: Compile rtapackage
+        id: compile
+        run: |
+          cd sdk
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
+          for package in "${packages[@]}"; do
+            echo "make package/$package/{clean,compile} -j$(nproc)"
+            make package/"$package"/{clean,compile} -j$(nproc)
+            ./scripts/feeds install -d n "$package"
+          done
+          mv bin/packages/x86_64/rtapackage/ ../
+          rm .config .config.old
+          cd ../rtapackage
+          for i in $(ls); do mv $i luci-${{ matrix.luci_ver }}_$i; done
+          cd ..
+          echo "status=success" >> $GITHUB_OUTPUT
+          echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+
+      - name: Upload rtapackage ipks to release
+        uses: softprops/action-gh-release@master
+        if: steps.compile.outputs.status == 'success'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: prerelease
+          files: ${{ env.FIRMWARE }}/rtapackage/*.ipk

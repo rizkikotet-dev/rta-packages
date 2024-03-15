@@ -1,4 +1,4 @@
-name: "Auto compile with OpenWrt SDK"
+name: "Auto compile with openwrt sdk v1"
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -77,6 +77,19 @@ jobs:
       - name: Configure RTA (main)
         run: |
           cd sdk
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
           for package in "${packages[@]}"; do
           ./scripts/feeds install "$package"
           done
@@ -85,6 +98,19 @@ jobs:
         id: compile
         run: |
           cd sdk
+          packages=(
+            "luci-app-base64" 
+            "luci-app-libernet" 
+            "luci-app-libernet-bin" 
+            "luci-app-libernet-plus" 
+            "luci-app-mikhmon" 
+            "luci-app-mikhmon4" 
+            "luci-app-netmonitor" 
+            "luci-app-wegare" 
+            "luci-app-xderm" 
+            "luci-app-xderm-bin" 
+            "luci-app-xderm-limit"
+          )
           for package in "${packages[@]}"; do
             make "package/$package/compile"
           done
