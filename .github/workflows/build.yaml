@@ -71,39 +71,13 @@ jobs:
           echo "src-git-full routing https://git.openwrt.org/feed/routing.git;openwrt-21.02"  >> feeds.conf
           git clone https://github.com/${{ github.repository }}.git package/downloads
           ./scripts/feeds update -a
-          packages=(
-            "luci-app-base64" 
-            "luci-app-libernet" 
-            "luci-app-libernet-bin" 
-            "luci-app-libernet-plus" 
-            "luci-app-mikhmon" 
-            "luci-app-mikhmon4" 
-            "luci-app-netmonitor" 
-            "luci-app-wegare" 
-            "luci-app-xderm" 
-            "luci-app-xderm-bin" 
-            "luci-app-xderm-limit"
-          )
           for package in ${{ steps.list_package.outputs.content}}; do
             ./scripts/feeds install -d n "$package"
           done
       - name: Configure RTA (main)
         run: |
           cd sdk
-          packages=(
-            "luci-app-base64" 
-            "luci-app-libernet" 
-            "luci-app-libernet-bin" 
-            "luci-app-libernet-plus" 
-            "luci-app-mikhmon" 
-            "luci-app-mikhmon4" 
-            "luci-app-netmonitor" 
-            "luci-app-wegare" 
-            "luci-app-xderm" 
-            "luci-app-xderm-bin" 
-            "luci-app-xderm-limit"
-          )
-          for package in "${packages[@]}"; do
+          for package in ${{ steps.list_package.outputs.content}}; do
           ./scripts/feeds install "$package"
           done
           make defconfig
@@ -111,20 +85,7 @@ jobs:
         id: compile
         run: |
           cd sdk
-          packages=(
-            "luci-app-base64" 
-            "luci-app-libernet" 
-            "luci-app-libernet-bin" 
-            "luci-app-libernet-plus" 
-            "luci-app-mikhmon" 
-            "luci-app-mikhmon4" 
-            "luci-app-netmonitor" 
-            "luci-app-wegare" 
-            "luci-app-xderm" 
-            "luci-app-xderm-bin" 
-            "luci-app-xderm-limit"
-          )
-          for package in "${packages[@]}"; do
+          for package in ${{ steps.list_package.outputs.content}}; do
             make "package/$package/compile"
           done
           mv bin/packages/x86_64/base/ ../
