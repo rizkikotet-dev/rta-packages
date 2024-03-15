@@ -74,8 +74,6 @@ jobs:
           for package in "${packages[@]}"; do
             ./scripts/feeds install -d n "$package"
           done
-          make defconfig
-
       - name: Configure RTA (main)
         run: |
           cd sdk
@@ -83,8 +81,8 @@ jobs:
           ./scripts/feeds install "$package"
           done
           make defconfig
-
-      - name: Compile RTA
+      - name: Compile RTA (main)
+        id: compile
         run: |
           cd sdk
           for package in "${packages[@]}"; do
