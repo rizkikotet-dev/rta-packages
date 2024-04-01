@@ -1,0 +1,37 @@
+name: Create Rooter2305 Patch
+
+on:
+  push:
+    branches:
+      - main  # Atur sesuai dengan nama cabang yang diinginkan
+
+env:
+  TZ: Asia/Jakarta
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Clone Repo
+      run: git clone https://github.com/ofmodemsandmen/ROOterSource2305.git openwrt
+
+    - name: Create Rooter2305 Patch
+      run: |
+        echo "DATETIME=$(date +'%Y.%m.%d-%H:%M:%S')" >> $GITHUB_ENV
+        cp -rf openwrt/package/rooter-builds/0protocols/luci-proto-3x luci-proto-3x/
+        #cp -rf openwrt/package/rooter-custom-builds Rooter2305-Patch/
+        #cp -rf openwrt/package/rooter-extra Rooter2305-Patch/
+        #cp -rf openwrt/package/rooter Rooter2305-Patch/
+        rm -rf openwrt
+
+    - name: Commit Changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "Update : ${{ env.DATETIME }}"
+        git push
