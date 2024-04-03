@@ -62,7 +62,7 @@ jobs:
         run: |
           echo ""
           mkdir feeds
-          cp -rf * ./feeds/
+          cp -rf * feeds/.
   
       - name: Creating Directory
         run: mkdir artifacts
