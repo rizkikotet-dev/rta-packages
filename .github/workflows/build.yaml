@@ -19,8 +19,6 @@ jobs:
   job_check:
     name: Check Version
     runs-on: ubuntu-latest
-    outputs:
-      has_update: ${{ steps.check_version.outputs.has_update }}
     steps:
       - name: Checkout
         uses: actions/checkout@main
@@ -36,7 +34,6 @@ jobs:
           touch release.txt
 
       - name: Generate new tag & release
-        if: steps.check_version.outputs.has_update == 'true'
         uses: softprops/action-gh-release@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -46,7 +43,6 @@ jobs:
 
 
   job_auto_compile:
-    if: needs.job_check.outputs.has_update == 'true'
     needs: job_check
     runs-on: ubuntu-latest
     name: build (${{ matrix.platform }})
