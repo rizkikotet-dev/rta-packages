@@ -143,7 +143,22 @@ jobs:
           echo "CONFIG_ALL_KMODS=n" >> .config
           echo "CONFIG_ALL=n" >> .config
           echo "CONFIG_AUTOREMOVE=n" >> .config
-
+          echo "CONFIG_PACKAGE_ext-buttons=y" >> .config
+          echo "CONFIG_PACKAGE_ext-command=y" >> .config
+          echo "CONFIG_PACKAGE_ext-extra=y" >> .config
+          echo "CONFIG_PACKAGE_ext-netselect=y" >> .config
+          echo "CONFIG_PACKAGE_ext-rooter-basic=y" >> .config
+          echo "CONFIG_PACKAGE_ext-selectisp=y" >> .config
+          echo "CONFIG_PACKAGE_ext-simpin=y" >> .config
+          echo "CONFIG_PACKAGE_ext-simplegps=y" >> .config
+          echo "CONFIG_PACKAGE_ext-sms=y" >> .config
+          #echo "CONFIG_PACKAGE_luci-app-base64=y" >> .config
+          echo "CONFIG_PACKAGE_luci-proto-3x=y" >> .config
+          echo "CONFIG_PACKAGE_luci-proto-mbim=y" >> .config
+          echo "CONFIG_PACKAGE_netrestart=y" >> .config
+          echo "CONFIG_PACKAGE_rmbim=y" >> .config
+          echo "CONFIG_PACKAGE_rqmi=y" >> .config
+          
           make defconfig
 
 
