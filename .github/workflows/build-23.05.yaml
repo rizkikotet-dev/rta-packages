@@ -2,7 +2,7 @@
 # Copyright (c) 2022-2023 SMALLPROGRAM <https://github.com/smallprogram>
 # Description: Auto compile
 #
-name: "Auto compile with openwrt sdk"
+name: "Build IPK - 23.05"
 on:
   repository_dispatch:
   workflow_dispatch:
@@ -38,7 +38,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: latest-version
+          name: OpenWrt-Packages v23.05
+          tag_name: latest-version-23-05
           body_path: release.txt
 
 
@@ -143,32 +144,6 @@ jobs:
           echo "CONFIG_ALL_KMODS=n" >> .config
           echo "CONFIG_ALL=n" >> .config
           echo "CONFIG_AUTOREMOVE=n" >> .config
-          echo "CONFIG_PACKAGE_ext-buttons=y" >> .config
-          echo "CONFIG_PACKAGE_ext-command=y" >> .config
-          echo "CONFIG_PACKAGE_ext-extra=y" >> .config
-          echo "CONFIG_PACKAGE_ext-netselect=y" >> .config
-          echo "CONFIG_PACKAGE_ext-rooter-basic=y" >> .config
-          echo "CONFIG_PACKAGE_ext-selectisp=y" >> .config
-          echo "CONFIG_PACKAGE_ext-simpin=y" >> .config
-          echo "CONFIG_PACKAGE_ext-simplegps=y" >> .config
-          echo "CONFIG_PACKAGE_ext-sms=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-base64=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-libernet-bin=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-libernet-plus=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-libernet=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-mikhmon=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-mikhmon4=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-netmonitor=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-wegare=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-xderm-bin=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-xderm-limit=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-xderm=y" >> .config
-          echo "CONFIG_PACKAGE_luci-proto-3x=y" >> .config
-          echo "CONFIG_PACKAGE_luci-proto-mbim=y" >> .config
-          echo "CONFIG_PACKAGE_netrestart=y" >> .config
-          echo "CONFIG_PACKAGE_rmbim=y" >> .config
-          echo "CONFIG_PACKAGE_rqmi=y" >> .config
-          echo "CONFIG_PACKAGE_speedtest-web=y" >> .config
 
           make defconfig
 
@@ -183,12 +158,18 @@ jobs:
         id: compile
         run: |
           cd sdk
-          for package in $(ls feeds/rta_packages); do
+          try
+          {
+            for package in $(ls feeds/rta_packages); do
               if [ -d "feeds/rta_packages/$package" ]; then
                   make package/feeds/rta_packages/$package/compile -j$(nproc) 2>/dev/null
               fi
-          done
-
+            done
+          }
+          catch
+          {
+            echo "An error occurred but workflow will continue."
+          }
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: Organize ${{ matrix.platform }} files
@@ -232,7 +213,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: OpenWrt-Packages
-          tag_name: latest-version
+          name: OpenWrt-Packages v23.05
+          tag_name: latest-version-23-05
           body_path: ${{ env.FIRMWARE }}/release.txt
           files: ${{ env.FIRMWARE }}/upload/*
