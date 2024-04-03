@@ -102,7 +102,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./release/*
+          file: ${{ github.workspace }}/artifacts/bin/packages/${{ matrix.arch }}/action/*.ipk
           release_name: OpenWrt RTA Packages
           overwrite: true
           tag: latest
