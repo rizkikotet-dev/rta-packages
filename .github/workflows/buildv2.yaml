@@ -123,6 +123,7 @@ jobs:
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./release/*
+          release_name: OpenWrt RTA Packages
           overwrite: true
           tag: latest
           file_glob: true
