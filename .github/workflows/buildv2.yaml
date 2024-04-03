@@ -124,7 +124,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: ./release/*
           overwrite: true
-          tag: ${{ inputs.version }}
+          tag: latest
           file_glob: true
           body: |
             ### Please Install with normal Connectivity
