@@ -62,7 +62,7 @@ jobs:
         run: |
           echo ""
           mkdir feeds
-          cp -R * feeds/
+          rsync -av --exclude='feeds' ./ feeds/
   
       - name: Creating Directory
         run: mkdir artifacts
