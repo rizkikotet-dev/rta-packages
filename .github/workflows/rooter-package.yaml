@@ -2,9 +2,8 @@ name: Create Rooter2305 Patch
 
 on:
   workflow_dispatch:
-  #push:
-  #  branches:
-  #    - main  # Atur sesuai dengan nama cabang yang diinginkan
+  schedule:
+    - cron: "00 19 * * *" # 02:00 GMT+7
 
 env:
   TZ: Asia/Jakarta
@@ -39,10 +38,14 @@ jobs:
         cp -rf openwrt/package/rooter/ext-rooter-basic/* ./ext-rooter-basic
         rm -rf openwrt
 
-    - name: Commit Changes
-      run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-        git add .
-        git commit -m " RooterUpdate : ${{ env.DATETIME }}"
-        git push
+    - uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_options: '--no-verify --signoff'
+        push_options: '--force'
+        commit_message: "🎉 Sync: ${{ env.DATETIME }}"
+
+    - name: Delete workflow runs
+      uses: Mattraks/delete-workflow-runs@main
+      continue-on-error: true
+      with:
+        retain_days: 1
