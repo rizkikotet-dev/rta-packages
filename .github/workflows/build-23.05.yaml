@@ -128,10 +128,9 @@ jobs:
       - name: ${{ matrix.platform }} feeds configuration packages
         run: |
           cd sdk
-          echo "src-git base https://github.com/openwrt/openwrt.git;openwrt-23.05" > feeds.conf
-          echo "src-git packages https://github.com/openwrt/packages.git;openwrt-23.05" >> feeds.conf
-          echo "src-git luci https://github.com/openwrt/luci.git;openwrt-23.05" >> feeds.conf
-          echo "src-git routing https://git.openwrt.org/feed/routing.git;openwrt-23.05"  >> feeds.conf
+          echo "src-git base https://github.com/ofmodemsandmen/ROOterSource2305.git;main" > feeds.conf
+          wget https://raw.githubusercontent.com/ofmodemsandmen/ROOterSource2305/main/feeds.conf.default -O feeds.conf.default
+          cat feeds.conf.default >> feeds.conf
           echo "src-git rta_packages https://github.com/rtaserver/rta-packages.git;main" >> feeds.conf
 
           ./scripts/feeds update -a
