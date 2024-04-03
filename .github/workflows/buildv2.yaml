@@ -80,7 +80,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: openwrt_${{ matrix.release }}_${{ matrix.arch }}
-          path: ${{ github.workspace }}/artifacts/bin/packages/${{ matrix.arch }}/*
+          path: ${{ github.workspace }}/artifacts/bin/packages/${{ matrix.arch }}/action/*
 
   push_packages:
     needs: build_ipk
@@ -95,27 +95,8 @@ jobs:
       - name: Moving artifact to releases
         shell: bash
         run: |
-          # rm -rf releases/*
-          mkdir -p releases 2>/dev/null
-          version=( 22.03.5 23.05.2 )
-          archi=( x86_64 mips_24kc mipsel_24kc arm_cortex-a7_neon-vfpv4 aarch64_cortex-a53 aarch64_cortex-a72 aarch64_generic )
-          for vr in ${version[*]} 
-            do
-              vers=$(echo $vr | sed 's/..$//')
-              for arc in ${archi[*]} 
-                do
-                  rm -rf releases/$vers/packages/$arc
-                  mkdir -p releases/$vers/packages/$arc
-                  cp -rf openwrt_$vr\_$arc/* releases/$vers/packages/$arc
-                  rm -rf releases/$vers/packages/$arc/routing releases/$vers/packages/$arc/telephony
-                done
-            done
-          
-          rm -rf openwrt_* 2>/dev/null
-
-      - name: Display structure files
-        working-directory: releases
-        run: ls -R
+          mkdir ./release
+          rsync -av --exclude='release' ./ release/
         
       - name: Upload release asset
         uses: svenstaro/upload-release-action@v2
