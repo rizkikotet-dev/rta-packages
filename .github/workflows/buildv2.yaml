@@ -1,7 +1,4 @@
-#
-# Copyright (C) 2024 nosignals
-#
-name: Building Neko
+name: Building IPK v2
 
 on:
   workflow_dispatch:
@@ -65,7 +62,7 @@ jobs:
         run: |
           echo ""
           mkdir feeds
-          cp -rf ./* ./feeds
+          cp -rf * ./feeds/
   
       - name: Creating Directory
         run: mkdir artifacts
