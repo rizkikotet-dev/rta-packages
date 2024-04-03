@@ -67,7 +67,7 @@ jobs:
         run: mkdir artifacts
         
       - name: Building Package
-        uses: nosignals/gh-action-sdk@main
+        uses: openwrt/gh-action-sdk@main
         env:
           ARCH: ${{ matrix.arch }}-${{ matrix.release }}
           ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
