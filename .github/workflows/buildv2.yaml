@@ -1,0 +1,133 @@
+#
+# Copyright (C) 2024 nosignals
+#
+name: Building Neko
+
+on:
+  workflow_dispatch:
+    inputs:
+      compile_pkg:
+        description: 'Compile packages (default : all packages on list_packages.txt)'
+        required: false
+        default: ''
+        type: string
+        
+      verbose:
+        description: 'Verbose (default : 0)'
+        required: false
+        default: '0'
+        type: string
+        
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  
+jobs: 
+  build_ipk:
+    permissions:
+      contents: write
+    name: AutoCompiler
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        release:
+          - 22.03.5
+          - 23.05.2
+        arch:
+          - x86_64
+          - mips_24kc
+          - mipsel_24kc
+          - arm_cortex-a7_neon-vfpv4
+          - aarch64_cortex-a53
+          - aarch64_cortex-a72
+          - aarch64_generic
+          
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Reading Package 
+        if: inputs.compile_pkg == ''
+        id: list_package
+        uses: jaywcjlove/github-action-read-file@main
+        with:
+          branch: main
+          path: list_packages.txt
+
+      - name: List Compiled Packages
+        run: echo "Compiled Packages | ${{ steps.list_package.outputs.content }} ${{ inputs.compile_pkg }}"
+
+      - name: Preparing Feeds
+        run: |
+          echo ""
+          mkdir feeds
+          cp -rf ./* ./feeds
+  
+      - name: Creating Directory
+        run: mkdir artifacts
+        
+      - name: Building Package
+        uses: nosignals/gh-action-sdk@main
+        env:
+          ARCH: ${{ matrix.arch }}-${{ matrix.release }}
+          ARTIFACTS_DIR: ${{ github.workspace }}/artifacts
+          FEED_DIR: ${{ github.workspace }}/feeds
+          PACKAGES: ${{ steps.list_package.outputs.content}} ${{ inputs.compile_pkg }}
+          INDEX: 1
+          V: ${{ inputs.verbose }}
+        
+      - name: Delivering Package
+        uses: actions/upload-artifact@v3
+        with:
+          name: openwrt_${{ matrix.release }}_${{ matrix.arch }}
+          path: ${{ github.workspace }}/artifacts/bin/packages/${{ matrix.arch }}/*
+
+  push_packages:
+    needs: build_ipk
+    name: Push Packages to Release
+    permissions:
+      contents: write  # To push a branch
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download temporary artifact
+        uses: actions/download-artifact@v3
+        
+      - name: Moving artifact to releases
+        shell: bash
+        run: |
+          # rm -rf releases/*
+          mkdir -p releases 2>/dev/null
+          version=( 22.03.5 23.05.2 )
+          archi=( x86_64 mips_24kc mipsel_24kc arm_cortex-a7_neon-vfpv4 aarch64_cortex-a53 aarch64_cortex-a72 aarch64_generic )
+          for vr in ${version[*]} 
+            do
+              vers=$(echo $vr | sed 's/..$//')
+              for arc in ${archi[*]} 
+                do
+                  rm -rf releases/$vers/packages/$arc
+                  mkdir -p releases/$vers/packages/$arc
+                  cp -rf openwrt_$vr\_$arc/* releases/$vers/packages/$arc
+                  rm -rf releases/$vers/packages/$arc/routing releases/$vers/packages/$arc/telephony
+                done
+            done
+          
+          rm -rf openwrt_* 2>/dev/null
+
+      - name: Display structure files
+        working-directory: releases
+        run: ls -R
+        
+      - name: Upload release asset
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./release/*
+          overwrite: true
+          tag: ${{ inputs.version }}
+          file_glob: true
+          body: |
+            ### Please Install with normal Connectivity
