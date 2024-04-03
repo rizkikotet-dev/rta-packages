@@ -134,7 +134,13 @@ jobs:
           echo "src-git rta_packages https://github.com/rtaserver/rta-packages.git;main" >> feeds.conf
 
           ./scripts/feeds update -a
-          ./scripts/feeds install -a -f -p rta_packages
+          # ./scripts/feeds install -a -f -p rta_packages
+          ./scripts/feeds install -a
+
+          make defconfig
+          make download -j16
+          find dl -size -1024c -exec ls -l {} \;
+          find dl -size -1024c -exec rm -f {} \;
 
           rm -rf feeds/packages/lang/golang
           git clone https://github.com/sbwml/packages_lang_golang -b 22.x feeds/packages/lang/golang
@@ -152,7 +158,6 @@ jobs:
           echo "CONFIG_PACKAGE_ext-simpin=y" >> .config
           echo "CONFIG_PACKAGE_ext-simplegps=y" >> .config
           echo "CONFIG_PACKAGE_ext-sms=y" >> .config
-          #echo "CONFIG_PACKAGE_luci-app-base64=y" >> .config
           echo "CONFIG_PACKAGE_luci-proto-3x=y" >> .config
           echo "CONFIG_PACKAGE_luci-proto-mbim=y" >> .config
           echo "CONFIG_PACKAGE_netrestart=y" >> .config
