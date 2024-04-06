@@ -29,7 +29,7 @@ jobs:
       - name: Configure Build
         run: |
           cd immortalwrt
-          cp target/linux/x86/cconfig-6.6 ./config
+          cp target/linux/x86/cconfig-6.6 .config
           make defconfig
 
       - name: Build SDK
