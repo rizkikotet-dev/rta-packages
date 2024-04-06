@@ -22,6 +22,7 @@ jobs:
     - name: Create Rooter2305 Patch
       run: |
         echo "DATETIME=$(date +'%Y.%m.%d-%H:%M:%S')" >> $GITHUB_ENV
+        cp -rf openwrt/package* ./package
         cp -rf openwrt/package/rooter-builds/0protocols/luci-proto-3x/* ./luci-proto-3x
         cp -rf openwrt/package/rooter-builds/0protocols/luci-proto-mbim/* ./luci-proto-mbim
         cp -rf openwrt/package/rooter-extra/ext-netselect/* ./ext-netselect
