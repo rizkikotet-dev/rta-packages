@@ -1,0 +1,65 @@
+name: Build and Release ImmortalWrt SDK
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_release:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libncurses-dev git wget python3
+
+      - name: Clone ImmortalWrt Repository
+        run: git clone https://github.com/immortalwrt/immortalwrt.git
+
+      - name: Update Source Code
+        run: |
+          cd immortalwrt
+          git pull
+
+      - name: Configure Build
+        run: |
+          cd immortalwrt
+          cp target/linux/x86/config-5.10 .config
+          make defconfig
+
+      - name: Build SDK
+        run: |
+          cd immortalwrt
+          make sdk
+
+      - name: Package SDK
+        run: |
+          cd immortalwrt/bin/targets/x86/64/
+          tar -cvJf immortalwrt-sdk-${{ github.run_number }}-x86-64.tar.xz sdk/
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}
+          release_name: Release ${{ github.run_number }}
+          draft: false
+          prerelease: false
+
+      - name: Upload SDK to Release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: immortalwrt/bin/targets/x86/64/immortalwrt-sdk-${{ github.run_number }}-x86-64.tar.xz
+          asset_name: immortalwrt-sdk-${{ github.run_number }}-x86-64.tar.xz
+          asset_content_type: application/x-tar
