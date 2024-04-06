@@ -180,7 +180,7 @@ jobs:
           for package in $(ls feeds/rta_packages); do
             if [ -d "feeds/rta_packages/$package" ]; then
               # make package/feeds/rta_packages/$package/compile -j$(nproc) 2>/dev/null
-              make package/feeds/rooter/ext-rooter-basic/compile -j$(nproc) 2>/dev/null
+              make package/feeds/rooter/compile -j$(nproc) 2>/dev/null
             fi
           done
           echo "status=success" >> $GITHUB_OUTPUT
