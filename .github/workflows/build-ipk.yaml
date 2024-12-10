@@ -1,4 +1,4 @@
-name: Build - WRT 23.05.2
+name: Build - IPK WRT
 
 on:
   workflow_dispatch:
